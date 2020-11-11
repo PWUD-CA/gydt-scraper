@@ -1,0 +1,58 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: GYDT Nightly Updater
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: "0 8 * * *"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        mkdir -p artifacts/
+    - name: Scrape Site
+      run:  python ./gydt/GYDTScraper.py
+    - name: Upload GYDT CSV
+      uses: actions/upload-artifact@v2
+      with:
+         name: 'GYDT Full Test Data - (${{steps.date.outputs.date}}) (CSV)'
+         path: artifacts/GYDT Full Data - ${{steps.date.outputs.date}}.csv
+    - name: Create a Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          tag_name: ${{ github.ref }}-${{steps.date.outputs.date}}-github-action
+          release_name: GYDT Full Test Data - (${{steps.date.outputs.date}})
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: artifacts/GYDT Full Data - ${{steps.date.outputs.date}}.csv
+        asset_name: GYDT-Complete-${{steps.date.outputs.date}}.csv
+        asset_content_type: 'text/csv'
