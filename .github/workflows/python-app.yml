@@ -35,7 +35,7 @@ jobs:
     - name: Upload GYDT CSV
       uses: actions/upload-artifact@v2
       with:
-         name: 'GYDT Full Test Data - (${{steps.date.outputs.date}}) (CSV)'
+         name: 'GYDT Full Data - (${{steps.date.outputs.date}}) (CSV)'
          path: artifacts/GYDT Full Data - ${{steps.date.outputs.date}}.csv
     - name: Create a Release
       id: create_release
@@ -44,7 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
           tag_name: ${{ github.ref }}-${{steps.date.outputs.date}}-github-action
-          release_name: GYDT Full Test Data - (${{steps.date.outputs.date}})
+          release_name: GYDT Full Data - (${{steps.date.outputs.date}})
 
     - name: Upload Release Asset
       id: upload-release-asset 
